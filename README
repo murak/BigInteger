@@ -1,0 +1,10 @@
+compile the c++ file on Linux machine using command below
+
+g++ -c BigInt.h
+
+find the main.cpp file which shows how the BigInt type can be used in your program
+You can test BigInt.h using main.cpp. To compile main and use it execute below command
+
+g++ main.cpp
+
+for any quries write to me to muralik.msr@gmail.com
