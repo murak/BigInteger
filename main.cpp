@@ -94,10 +94,20 @@ int main() {
 
     BigInt fact("1");
     clock_t time = clock();
-    fact = fact.factorial(10000);
+    fact = fact.factorial(1000);
     time = clock() - time;
     std::cout<<"\n\n10000 Factorial:\n"<<fact.toString()<<std::endl;
-    std::cout<<"\n\ntime taken to find 10000! = "<<time/CLOCKS_PER_SEC<<" seconds";
+    std::cout<<"\n\ntime taken to find 1000! = "<<time/CLOCKS_PER_SEC<<" seconds";
+
+    BigInt rd;
+    rd = rd.random();
+    std::cout<<"\n\n\nRandom number = "<<rd.toString()<<"\n\n";
+
+    rd = rd.random();
+    std::cout<<"\n\n\nRandom number = "<<rd.toString()<<"\n\n";
+
+    rd = rd.random();
+    std::cout<<"\n\n\nRandom number = "<<rd.toString()<<"\n\n";
 
     return 0;
 }

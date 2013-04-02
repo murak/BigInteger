@@ -1,57 +1,38 @@
-/*
- * Big Integer implementation in C++
- * Author: Murali K                                 
- * Date: 27 March 2013
- */
-
-/* Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above notice and this permission notice shall be included in all copies
- * or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
- 
 #include<iostream>
 #include<ostream>
-
 #include<vector>
 #include<algorithm>
 #include<string>
 #include<cassert>
 
-
 class BigInt {
 private: std::vector<char> num;
 
 public:
+    /* constructors */
     BigInt(std::string number);
     BigInt(int num);
     BigInt();
-    BigInt trim();
-    std::string toString();
-    void printVector();
+
+    /* operations */
     BigInt add(BigInt b);
     BigInt tens_complement();
-    void normalize(BigInt &b);
     BigInt subtract(BigInt b);
     BigInt multiply(BigInt& b);
     BigInt multiply(int b);
-    int max(int a, int b);
     BigInt factorial(int num);
+    BigInt random();
+    
+    /* helpers */
+    BigInt trim();
+    std::string toString();
+    void normalize(BigInt &b);
+    int max(int a, int b);
 
-    /*operators for big int */
+    /*for debugging pupose only */
+    void printVector();
+
+    /*operators overloaded for big int */
     BigInt operator+(BigInt& b);
     BigInt operator-(BigInt& b);
     BigInt operator*(BigInt& b);
@@ -61,6 +42,7 @@ BigInt::BigInt() {
 
 }
 
+/* constructor int --> BigInt */
 BigInt::BigInt(int n) {
     while(n) {
         this->num.push_back(n%10);
@@ -72,6 +54,7 @@ BigInt::BigInt(int n) {
     else this->num.push_back(0);
 }
 
+/* constructor string --> BigInt */
 BigInt::BigInt(std::string number) {
     bool error_flag = false;
     int i;
@@ -81,7 +64,8 @@ BigInt::BigInt(std::string number) {
         this->num.push_back(0);
         this->num.push_back(0);
     }
-    /* insert digit by digit in reverse order into vector till end except the last character(i=0; possibly sign)*/
+    /* insert digit by digit in reverse order into vector till end 
+     * except the last character(i=0; possibly sign)*/
     for(i=(int)number.size()-1; i>0; i--) {
         if(number[i]-'0' >=0 && number[i]-'0'<=9)
             this->num.push_back(number[i]-'0');   
@@ -92,16 +76,24 @@ BigInt::BigInt(std::string number) {
     }
     /*decide sign bit*/
     if(i==0) {
+        /* insert an additional zero just before the sign bit to 
+         * get a proper tens complement during subtraction operation 
+         */
         if(number[i]=='-') {
+            this->num.push_back(0);
             this->num.push_back(1);
         }
         else if(number[i] == '+') {
             this->num.push_back(0);
+            this->num.push_back(0);
         }
         else {
-            /* if sign is not passed then insert the number and set positive bit */
+            /* if sign is not passed then insert the 
+             * number and set positive bit 
+             */
             if(number[i]-'0' >=0 && number[i]-'0'<=9) {
                 this->num.push_back(number[i]-'0');   
+                this->num.push_back(0);
                 this->num.push_back(0);   
             }
             else {
@@ -110,12 +102,6 @@ BigInt::BigInt(std::string number) {
         }
     }
     
-    /* fix */
-    int bit = this->num[this->num.size()-1];
-    this->num.pop_back();
-    this->num.push_back(0);
-    this->num.push_back(bit);
-
     if(this->num.size() <= 1) {
         std::cout<<"only sign is being passed!!\n";
         exit(10);
@@ -124,8 +110,13 @@ BigInt::BigInt(std::string number) {
 }
 
 BigInt BigInt::trim() {
-    /* if only 2 elements then a zero at end will just mean its a positive number. so nothing to trim */
-    while(this->num.size()>2 && this->num[this->num.size()-1] == 0 && this->num[this->num.size()-2] == 0) this->num.pop_back();
+    /* if only 2 elements then a zero at end will just 
+     * mean its a positive number. so nothing to trim 
+     */
+    char bit = this->num[this->num.size()-1];
+    this->num.pop_back();
+    while(this->num.size()>=2 && this->num[this->num.size()-1] == 0 ) this->num.pop_back();
+    this->num.push_back(bit);
     return *this;
 }
 
@@ -149,18 +140,30 @@ int BigInt::max(int a, int b) {
     return b;
 }
 
+/* To make the number of digits in both a and b the same
+ * This would aid some operations 
+ */
 void BigInt::normalize(BigInt &b) {
 
     if(this->num.size() > b.num.size()) {
         char msb = b.num[b.num.size()-1];
-        for(int i=b.num.size(); i<this->num.size(); i++) b.num.push_back(msb);
+        for(int i=b.num.size(); i<this->num.size(); i++) 
+            b.num.push_back(msb);
     }
     else {
         char msb = this->num[this->num.size()-1];
-        for(int i=this->num.size(); i<b.num.size(); i++) this->num.push_back(msb);
+        for(int i=this->num.size(); i<b.num.size(); i++) 
+            this->num.push_back(msb);
     }
 }
 
+/* To take the tens complement of the given number.
+ * Useful for subtraction. The unit digit to be subtracted from 10.
+ * Rest of all digits to be subtracted from 9
+ *
+ * Assumption: sign bit should be flipped to 0 from 1
+ *             before the -ve number is sent to get complement
+ */
 BigInt BigInt::tens_complement() {
     BigInt comp;
     int carry = 0, i, diff, size_a = this->num.size();
@@ -182,6 +185,10 @@ BigInt BigInt::tens_complement() {
     return comp;
 }
 
+/* To add two BigInt's 
+ * handles cases when (a,b) is (+,+) (+,-) (-,+) (-,-)
+ * using 10s complement method
+ */
 BigInt BigInt::add(BigInt b) {
     BigInt a = (*this), s;
     char sum = 0, carry = 0;
@@ -200,7 +207,8 @@ BigInt BigInt::add(BigInt b) {
     }
 
     /*normalize size and update*/
-    if(a.num.size() != b.num.size() && (a.num[a.num.size()-1] == 9 || b.num[b.num.size()-1] == 9)) {
+    if(a.num.size() != b.num.size() && 
+            (a.num[a.num.size()-1] == 9 || b.num[b.num.size()-1] == 9)) {
         a.normalize(b);
     }
 
@@ -258,6 +266,8 @@ BigInt BigInt::add(BigInt b) {
     return s.trim();
 }
 
+/* subtract two bigint's. subtraction is done using 10's complement
+ */
 BigInt BigInt::subtract(BigInt b) {
     
     BigInt aa = (*this), bb = b;
@@ -277,6 +287,9 @@ BigInt BigInt::subtract(BigInt b) {
     return aa.add(bb);
 }
 
+/* Multiply two BigInts 
+ * Takes care of multiplying even if one or both numbers are negative
+ */
 BigInt BigInt::multiply(int b) {
     BigInt c;
     int i, size = 0, pro = 0, carry = 0;
@@ -305,6 +318,10 @@ BigInt BigInt::multiply(int b) {
 }
 
 
+/* Multiply a BigInt with an int
+ * Useful to find factorial. More efficient in cases where the number can be 
+ * just int and BigInt is not really needed
+ */
 BigInt BigInt::multiply(BigInt& b) {
     
     BigInt c;
@@ -331,6 +348,7 @@ BigInt BigInt::multiply(BigInt& b) {
     return c.trim();
 }
 
+/* To find Factorial of BigInt */
 BigInt BigInt::factorial(int num) {
     BigInt fact("1");
     for(int i=2; i<=num; i++) {
@@ -339,6 +357,13 @@ BigInt BigInt::factorial(int num) {
     return fact;
 }
 
+BigInt BigInt::random() {
+    int size = rand()%999 + 1;
+    for(int i=0; i<size; i++) 
+        this->num.push_back(rand()%10);
+    this->num.push_back(rand()%2);
+    return (*this);
+}
 
 BigInt BigInt::operator+(BigInt& b) {
     return this->add(b);
